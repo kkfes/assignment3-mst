@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
@@ -64,11 +66,63 @@ public class Main {
             kruskalStats.put("union_calls", kruskalResult.getUnionCalls());
             graphResult.put("kruskal", kruskalStats);
 
+            // Comparison summary (Prim vs Kruskal) required by the assignment
+            Map<String, Object> comparison = new HashMap<>();
+            int primTotal = primResult.getTotalCost();
+            int kruskalTotal = kruskalResult.getTotalCost();
+            double primTime = (double) primStats.get("execution_time_ms");
+            double kruskalTime = (double) kruskalStats.get("execution_time_ms");
+            int primOps = primResult.getOperations();
+            int kruskalOps = kruskalResult.getOperations();
+
+            comparison.put("prim_total_cost", primTotal);
+            comparison.put("kruskal_total_cost", kruskalTotal);
+            comparison.put("cost_equal", primTotal == kruskalTotal);
+            comparison.put("cost_difference", primTotal - kruskalTotal);
+
+            comparison.put("prim_execution_time_ms", primTime);
+            comparison.put("kruskal_execution_time_ms", kruskalTime);
+            comparison.put("time_difference_ms", primTime - kruskalTime);
+            comparison.put("faster_algorithm", (primTime < kruskalTime) ? "prim" : (primTime > kruskalTime) ? "kruskal" : "equal");
+
+            comparison.put("prim_operations", primOps);
+            comparison.put("kruskal_operations", kruskalOps);
+            comparison.put("operations_difference", primOps - kruskalOps);
+
+            graphResult.put("comparison", comparison);
+
             results.add(graphResult);
         }
 
-
+        // Write detailed JSON output
         JSONHandler.writeResultsToJSON(outputFilePath, Map.of("results", results));
+
+        // Also write a concise CSV summary for easy comparison/analysis
+        String csvPath = "data/summary.csv";
+        try (FileWriter csvWriter = new FileWriter(csvPath)) {
+            // header
+            csvWriter.append("graph_id,vertices,edges,prim_total_cost,kruskal_total_cost,cost_diff,prim_time_ms,kruskal_time_ms,time_diff_ms,prim_ops,kruskal_ops,ops_diff\n");
+            for (Map<String, Object> graphResult : results) {
+                Map<String, Integer> inputStats = (Map<String, Integer>) graphResult.get("input_stats");
+                Map<String, Object> comparison = (Map<String, Object>) graphResult.get("comparison");
+                csvWriter.append(String.valueOf(graphResult.get("graph_id"))).append(',');
+                csvWriter.append(String.valueOf(inputStats.get("vertices"))).append(',');
+                csvWriter.append(String.valueOf(inputStats.get("edges"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("prim_total_cost"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("kruskal_total_cost"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("cost_difference"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("prim_execution_time_ms"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("kruskal_execution_time_ms"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("time_difference_ms"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("prim_operations"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("kruskal_operations"))).append(',');
+                csvWriter.append(String.valueOf(comparison.get("operations_difference"))).append('\n');
+            }
+            System.out.println("Summary CSV written to " + csvPath);
+        } catch (IOException e) {
+            System.out.println("Failed to write CSV summary: " + e.getMessage());
+        }
+
         System.out.println("Results written to " + outputFilePath);
     }
 

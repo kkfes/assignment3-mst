@@ -88,7 +88,7 @@ public class MSTAlgorithmsTest {
         assertTrue(primTimeMs >= 0, "Prim execution time should be non-negative");
         assertTrue(kruskalTimeMs >= 0, "Kruskal execution time should be non-negative");
 
-        // Reproducibility: running again should produce same total cost
+        // Reproducibility: running again should produce the same total cost
         PrimAlgorithm.MSTResult primResult2 = PrimAlgorithm.findMST(graph);
         KruskalAlgorithm.MSTResult kruskalResult2 = KruskalAlgorithm.findMST(graph);
         assertEquals(primResult.getTotalCost(), primResult2.getTotalCost(), "Prim results should be reproducible");
